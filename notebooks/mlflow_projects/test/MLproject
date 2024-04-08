@@ -1,0 +1,12 @@
+name: mlflow-project-test
+
+docker_env:
+  image:  mlflow-project-test
+  environment: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
+
+entry_points:
+  main:
+    parameters:
+      alpha:    {type: float, default: 0.1}
+      l1_ratio: {type: float, default: 0.1}
+    command: "python train.py --alpha {alpha} --l1-ratio {l1_ratio}"

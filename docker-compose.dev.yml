@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+    jupyterlab:
+        restart: always
+        build: ./jupyterlab
+        image: jupyterlab
+        container_name: jupyterlab
+        environment:
+            MLFLOW_TRACKING_URI: "http://mlflow_tracking:5000"
+        ports:
+            - "8888:8888"
+        volumes:
+            - ./notebooks:/home/jovyan/notebooks
+        env_file:
+            - .env
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: 1
+                          capabilities: [gpu]
+        stdin_open: true 
+        tty: true 
+        
