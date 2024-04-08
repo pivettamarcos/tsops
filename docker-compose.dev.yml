@@ -7,7 +7,10 @@ services:
         image: jupyterlab
         container_name: jupyterlab
         environment:
-            MLFLOW_TRACKING_URI: "http://mlflow_tracking:5000"
+            - MLFLOW_S3_ENDPOINT_URL=http://mlflow-s3:9000
+            - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+            - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+            - MLFLOW_TRACKING_URI=http://mlflow_tracking:5000
         ports:
             - "8888:8888"
         volumes:

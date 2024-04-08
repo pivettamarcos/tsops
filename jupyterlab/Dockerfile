@@ -1,4 +1,4 @@
-FROM jupyter/datascience-notebook
+FROM quay.io/jupyter/datascience-notebook
 # Install python packages
 COPY requirements.txt /tmp
 RUN --mount=type=cache,target=/root/.cache/pip \
