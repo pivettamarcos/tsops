@@ -1,0 +1,83 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: k8s-mlflow-deployment
+  namespace: tsops-dev
+spec:
+  selector:
+    matchLabels:
+      app: k8s-mlflow
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        # Label is used as selector in the service.
+        app: k8s-mlflow
+    spec:
+      # Refer to the PVC created earlier
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          # Name of the PVC created earlier
+          claimName: mlflow-pvc
+      containers:
+      - name: mlflow
+        image: docker.io/pivettamarcos/tsops_tracking:latest
+        ports:
+        - containerPort: 5000
+          hostPort: 5000
+          name: mlflow-tracking
+        # Mount the volume into the pod
+        volumeMounts:
+        - name: data # must match the volume name, above
+          mountPath: "/usr/src/app/"
+        env:
+        - name: MLFLOW_S3_ENDPOINT_URL
+          value: "<TODO>"
+        - name: AWS_ACCESS_KEY_ID
+          value: "<TODO>"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "<TODO>"
+          # http://localhost:500 or something else
+        - name: MLFLOW_TRACKING_URI
+          value: "<TODO>"
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mlflow-pvc
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeMode: Filesystem
+status:
+  phase: Bound
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: k8s-mlflow
+  name: k8s-mlflow-service
+  namespace: tsops-dev
+spec:
+  ports:
+  - name: tracking
+    port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: k8s-mlflow
+  type: ClusterIP
