@@ -37,8 +37,8 @@ jobs:
         with:
           context: ./mlflow_tracking
           tags: |
-            docker.io/pivettamarcos/tsops/tsops_tracking:${{ github.ref_name }}
-            docker.io/pivettamarcos/tsops/tsops_tracking:latest
+            docker.io/pivettamarcos/tsops_tracking:${{ github.ref_name }}
+            docker.io/pivettamarcos/tsops_tracking:latest
           push: true
 
       - name: Image digest
