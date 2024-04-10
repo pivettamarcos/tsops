@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-deployment
+  namespace: tsops-dev
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: minio-pvc
+      containers:
+      - name: minio
+        image: quay.io/minio/minio:latest
+        args:
+        - server
+        - /data
+        - --console-address
+        - :9090
+        volumeMounts:
+        - mountPath: /data
+          name: data 
+        env:
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: AWS_SECRET_ACCESS_KEY
+        ports:
+        - containerPort: 9000
+          hostPort: 9000
+        - containerPort: 9090
+          hostPort: 9090
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-pv
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data/minio-pv/
+  storageClassName: minio-storage
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: minio-storage
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+  name: minio-svc
+  namespace: tsops-dev
+spec:
+  ports:
+  - name: api
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+    nodePort: 30001
+  - name: webui
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+    nodePort: 30002
+  selector:
+    app: minio
+  type: NodePort
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+  namespace: tsops-dev
+  labels:
+    app: minio-setup
+spec:
+  template:
+    spec:
+      containers:
+      - name: minio-setup
+        image: quay.io/minio/mc
+        command:
+        - /bin/sh
+        - -c
+        - >
+          while ! :> /dev/tcp/minio-svc/9000; do sleep 1; done;
+          mc alias set minio http://minio-svc:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY;
+          if ! mc ls minio/mlflow; then
+            mc mb minio/mlflow;
+          else
+            echo "Bucket minio/mlflow already created";
+          fi;
+        env:
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: AWS_SECRET_ACCESS_KEY
+      restartPolicy: OnFailure

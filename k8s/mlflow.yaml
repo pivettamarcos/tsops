@@ -1,0 +1,126 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: tsops-tracking-deployment
+  namespace: tsops-dev
+spec:
+  selector:
+    matchLabels:
+      app: tsops-tracking
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tsops-tracking
+    spec:
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mlflow-pvc
+      containers:
+      - name: mlflow
+        image: docker.io/pivettamarcos/tsops_tracking:latest
+        command: ["/bin/sh", "-c"]
+        args: ["mlflow server --backend-store-uri mysql+pymysql://$MYSQL_USER:$MYSQL_PASSWORD@mlflow-db-svc:3306/$MYSQL_DATABASE --default-artifact-root s3://mlflow/ --host 0.0.0.0 --port 5001"]
+        ports:
+        - containerPort: 5001
+          hostPort: 5001
+          name: mlflow-tracking
+        volumeMounts:
+        - name: data 
+          mountPath: "/usr/src/app/"
+        env:
+        - name: MLFLOW_TRACKING_URI
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: MLFLOW_TRACKING_URI
+        - name: MLFLOW_S3_ENDPOINT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mlflow-config
+              key: MLFLOW_S3_ENDPOINT_URL
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secrets
+              key: AWS_SECRET_ACCESS_KEY
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: MYSQL_PASSWORD
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mlflow-pv
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data/mlflow-pv/
+  storageClassName: mlflow-storage
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mlflow-pvc
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem
+  storageClassName: mlflow-storage
+status:
+  phase: Bound
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tsops-tracking
+  name: tsops-tracking-service
+  namespace: tsops-dev
+spec:
+  ports:
+  - name: tracking
+    port: 5001
+    protocol: TCP
+    targetPort: 5001
+    nodePort: 30000
+  selector:
+    app: tsops-tracking
+  type: NodePort

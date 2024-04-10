@@ -48,8 +48,7 @@ services:
 
     mlflow_tracking:
         restart: always
-        build: ./mlflow_tracking
-        image: mlflow_tracking
+        image: docker.io/pivettamarcos/tsops_tracking:latest
         container_name: mlflow_tracking
         depends_on:
             - mc

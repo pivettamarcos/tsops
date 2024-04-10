@@ -1,0 +1,16 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "inference"
+  namespace: "tsops-dev"
+spec:
+  predictor:
+    containers:
+      - name: "inference"
+        image: "registry.kube-system:80/inference"
+        ports:
+          - containerPort: 8080
+            protocol: TCP
+        env:
+          - name: PROTOCOL
+            value: "v2"
