@@ -10,7 +10,7 @@ install () {
   sudo apt-get update \
 	  && sudo apt-get install -y python3-pip python3-dev \
 	  && pip3 install --upgrade pip \
-	  && pip3 install virtualenv pyyaml setuptools kubernetes
+	  && pip3 install virtualenv pyyaml setuptools kubernetes mlserver_mlflow mlserver
 
   # install needed packages
   sudo apt -y install zlib1g zlib1g-dev libssl-dev python3-tk libreadline-dev libbz2-dev libffi-dev libsqlite3-dev
