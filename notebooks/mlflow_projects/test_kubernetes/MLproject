@@ -1,7 +1,7 @@
-name: mlflow-project-test
+name: test
 
 docker_env:
-  image:  mlflow-project-test
+  image: localhost:5000/mlflow-example-docker2
   environment: ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"]
 
 entry_points:

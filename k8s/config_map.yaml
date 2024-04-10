@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow-config
+  namespace: tsops-dev
+data:
+  MLFLOW_S3_ENDPOINT_URL: "http://minio-svc:9000"
+  MLFLOW_TRACKING_URI: "http://tsops-tracking-service:5001"

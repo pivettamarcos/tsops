@@ -3,7 +3,7 @@ PROJECT_NAME=sample-project
 .PHONY: start
 start:
 	docker compose down
-	docker compose -p $(PROJECT_NAME) up --build
+	docker compose -f docker-compose.yml -p $(PROJECT_NAME) up --build
 
 .PHONY: dev
 dev:
