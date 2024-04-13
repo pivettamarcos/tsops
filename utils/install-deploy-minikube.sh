@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SCRIPT_DIR=$(dirname "$0")
-PROJECT_DIR="$SCRIPT_DIR/../notebooks/mlflow_projects/$PROJECT_NAME"
 
 CMD=${1:-install}
 PREFIX=${2:-/usr/local/bin/}
@@ -58,7 +57,7 @@ start (){
 }
 
 deploy (){
-    cd $PROJECT_DIR
+    cd $SCRIPT_DIR
     minikube kubectl -- create namespace tsops-dev
 
     if [[ ! -f ../k8s/secrets.yaml ]]; then
