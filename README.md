@@ -5,55 +5,31 @@ A deployable stack for training and online inference of time series models
 
 1. Deploy 
 
-    To deploy with **minikube**, run ``cd utils; ./install-deploy-miniube.sh **install | start | deploy**``
+    To deploy with **minikube**, run ``utils/install-deploy-miniube.sh [install|start|deploy]``
 2. To **train** model
     - With virtualenv dependencies:
 
         ``cd`` to an MlFlow project and ``mlflow run <project_uri> --env-manager virtualenv``
 
-    - *With kubernetes backend (broken in minikube)*:
+    - **In emulated cluster (minikube or sorts)** - Recommended:
 
-        ``` mlflow run <project_uri> --backend kubernetes --backend-config <kubernetes_config.json> ```
+        Run ``utils/train.sh [build|push|train|all] --project_name <project_name>``
 3. To **serve** a model:
     - Locally:
 
         ``cd`` to an Mlflow project and ``mlflow models serve -m runs:/runID/model -p <serving_port> --enable-mlserver``
-    - In emulated cluster (minikube or sorts):
-        1. Create an InferenceService named <YOUR_CONFIG_FILE.yaml>:
-            ```
-            apiVersion: "serving.kserve.io/v1beta1"
-            kind: "InferenceService"
-            metadata:
-                name: "<inference-service-name>"
-                namespace: "<namespace-name>"
-            spec:
-            predictor:
-                serviceAccountName: sa
-                model:
-                    modelFormat:
-                        name: mlflow
-                    protocolVersion: v2
-                    storageUri: "<s3_uri>"
-            ```
-        2. ``kubectl apply -f <YOUR_CONFIG_FILE.yaml>``
-        3. Port forward istio service
-            ```
-            INGRESS_GATEWAY_SERVICE=$(kubectl get svc -n <namespace-name> --selector="app=istio-ingressgateway" -o jsonpath='{.items[0].metadata.name}')
-            kubectl port-forward -n <namespace-name> svc/${INGRESS_GATEWAY_SERVICE} <serving_port>:80
-            ```
+    - **In emulated cluster (minikube or sorts)** - Recommended:
+
+
+        Run ``utils/serve.sh [build|push|serve|all] --project_name <project_name> --model_name_alias <model_name@alias>``
+
 4. To **inference** a model:
     - Locally:
 
         ``` curl -X POST -H "Content-Type:application/json" --data '{"inputs": [[14.23, 1.71, 2.43, 15.6, 127.0, 2.8, 3.06, 0.28, 2.29, 5.64, 1.04, 3.92, 1065.0]]' http://127.0.0.1:<serving_port>/invocations ```
-    - In emulated cluster (minikube or sorts):
+    - **In emulated cluster (minikube or sorts)** - Recommended:
 
-        ```
-        curl -v \
-        -H "Host: ${SERVICE_HOSTNAME}" \
-        -H "Content-Type: application/json" \
-        -d @./test-input.json \
-        http://localhost:<serving_port>/v2/models/<inference-service-name>/infer
-        ```
+        Run ``utils/predict.sh [predict] --model_name <model_name> --input_file <input_file>``
 
 ## Stack components
 
@@ -63,6 +39,7 @@ A deployable stack for training and online inference of time series models
 - [ ] Model tracking (MLflow)
 - [ ] Scheduling (AirFlow)
 - [ ] Model monitoring
+- [ ] Secure Docker Registry
 
 ## MLOps Maturity level
 
