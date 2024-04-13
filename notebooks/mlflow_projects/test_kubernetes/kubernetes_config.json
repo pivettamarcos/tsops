@@ -1,4 +1,0 @@
-{
-    "kube-job-template-path": "kubernetes_job_template.yaml",
-    "repository-uri": "mlflow-example-docker"
-  }
