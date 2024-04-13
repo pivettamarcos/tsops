@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR=$(dirname "$0")
+PROJECT_DIR="$SCRIPT_DIR/../notebooks/mlflow_projects/$PROJECT_NAME"
+
 CMD=${1:-install}
 PREFIX=${2:-/usr/local/bin/}
 
@@ -23,6 +26,10 @@ install () {
     echo "minikube is already installed"
   fi
 
+  echo "Setting MLFLOW_TRACKING_URI and MLFLOW_S3_ENDPOINT_URL env variables in .bashrc"
+  echo 'export MLFLOW_TRACKING_URI="http://127.0.0.1:30000"' >> ~/.bashrc
+  echo 'export MLFLOW_S3_ENDPOINT_URL="http://127.0.0.1:30001"' >> ~/.bashrc
+
   # install pyenv
   curl https://pyenv.run | bash
   echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
@@ -38,15 +45,10 @@ start (){
 	echo "Enter memory in MB"
     read MEMORY
     echo "Starting minikube..."
-    minikube start --cpus $CPU --memory $MEMORY --ports=30000:30000,30001:30001,30002:30002
+    minikube start --cpus $CPU --memory $MEMORY --ports=30000:30000,30001:30001,30002:30002,30003:30003 
     
-    curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.12/hack/quick_install.sh" | bash
-
-    echo "Setting MLFLOW_TRACKING_URI and MLFLOW_S3_ENDPOINT_URL env variables in .bashrc"
-    echo 'export MLFLOW_TRACKING_URI="http://127.0.0.1:30000"' >> ~/.bashrc
-    echo 'export MLFLOW_S3_ENDPOINT_URL="http://127.0.0.1:30001"' >> ~/.bashrc
-
     minikube addons enable registry
+    curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.12/hack/quick_install.sh" | bash
   if ! command kubectl >/dev/null 2>&1; then
     # Install kubectl
     minikube kubectl -- get po -A
@@ -56,6 +58,7 @@ start (){
 }
 
 deploy (){
+    cd $PROJECT_DIR
     minikube kubectl -- create namespace tsops-dev
 
     if [[ ! -f ../k8s/secrets.yaml ]]; then
@@ -64,11 +67,12 @@ deploy (){
     fi
 
     for file in ../k8s/*.yaml; do
-      if [[ $file != "../k8s/secrets_sample.yaml" ]]; then
+      if [[ $file != ../k8s/*_sample.yaml ]]; then
         echo $file
         minikube kubectl -- apply -f "$file"
       fi
     done
+    cd -
 }
 
 remove () {
