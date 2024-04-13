@@ -1,0 +1,43 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: wine-classifier-job
+  namespace: tsops-dev
+spec:
+  template:
+    spec:
+      containers:
+        - name: wine-classifier
+          image: >-
+            127.0.0.1:5000/wine-classifier:latest
+          command:
+            - python
+            - train.py
+            - '--alpha'
+            - '0.1'
+            - '--l1-ratio'
+            - '0.1'
+          env:
+            - name: MLFLOW_S3_ENDPOINT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mlflow-config
+                  key: MLFLOW_S3_ENDPOINT_URL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: MLFLOW_TRACKING_URI
+              value: http://localhost:30000
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              memory: 256Mi
+      restartPolicy: Never

@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{replaced with MLflow Project name}"
+  namespace: tsops-dev
+spec:
+  ttlSecondsAfterFinished: 100
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - name: "{replaced with MLflow Project name}"
+          image: "{replaced with URI of Docker image created during Project execution}"
+          command: ["{replaced with MLflow Project entry point command}"]
+          env: 
+            - name: MLFLOW_S3_ENDPOINT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mlflow-config
+                  key: MLFLOW_S3_ENDPOINT_URL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+          resources:
+            limits:
+              memory: 512Mi
+            requests:
+              memory: 256Mi
+      restartPolicy: Never
