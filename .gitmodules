@@ -1,0 +1,6 @@
+[submodule "mlflow_projects/DeepTSF-tsops"]
+	path = mlflow_projects/DeepTSF-tsops
+	url = https://github.com/pivettamarcos/DeepTSF-tsops.git
+[submodule "mlflow_projects/deeptsf-tsops"]
+	path = mlflow_projects/deeptsf-tsops
+	url = https://github.com/pivettamarcos/DeepTSF-tsops.git
