@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter
+  namespace: tsops-dev
+  labels:
+    app: jupyter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+    spec:
+      containers:
+        - name: jupyter
+          image: itayb/jupyter-notebook:6.2.0-spark-3.1.1-java-11-hadoop-3.2.0
+          resources:
+            requests:
+              memory: 4096Mi
+            limits:
+              memory: 4096Mi
+          env:
+            - name: JUPYTER_PORT
+              value: "8888"
+          ports:
+            - containerPort: 8888
+      serviceAccount: my-release-spark
+      serviceAccountName: my-release-spark
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: jupyter
+  namespace: tsops-dev
+spec:
+  type: ClusterIP
+  selector:
+    app: jupyter
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: jupyter-headless
+  namespace: tsops-dev
+spec:
+  clusterIP: None
+  selector:
+    app: jupyter

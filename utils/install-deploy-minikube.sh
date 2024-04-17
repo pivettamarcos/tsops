@@ -18,11 +18,15 @@ install () {
   sudo apt -y install zlib1g zlib1g-dev libssl-dev python3-tk libreadline-dev libbz2-dev libffi-dev libsqlite3-dev
 
   if ! command minikube >/dev/null 2>&1; then
-    curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-    chmod +x minikube
-    mv minikube "$PREFIX"
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
   else
     echo "minikube is already installed"
+  fi
+
+  if ! command helm >/dev/null 2>&1; then
+    helm install my-release spark-operator/spark-operator --namespace tsops-dev --create-namespace --set sparkJobNamespace=tsops-dev
+  else
+    echo "helm is already installed"
   fi
 
   echo "Setting MLFLOW_TRACKING_URI and MLFLOW_S3_ENDPOINT_URL env variables in .bashrc"
@@ -39,15 +43,25 @@ install () {
 }
 
 start (){
-    echo "Enter number of cpu cores"
+  echo "Enter number of cpu cores"
 	read CPU
 	echo "Enter memory in MB"
-    read MEMORY
-    echo "Starting minikube..."
-    minikube start --cpus $CPU --memory $MEMORY --ports=30000:30000,30001:30001,30002:30002,30003:30003 
-    
-    minikube addons enable registry
-    curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.12/hack/quick_install.sh" | bash
+  read MEMORY
+  echo "Enter name of cluster"
+  read CLUSTER_NAME
+  echo "Starting minikube..."
+  minikube start --nodes 2 -p $CLUSTER_NAME --cpus $CPU --memory $MEMORY
+  
+  # enable registry service
+  minikube addons enable registry
+
+  # install kserve
+  curl -s "https://raw.githubusercontent.com/kserve/kserve/release-0.12/hack/quick_install.sh" | bash
+
+  # install helm and helm packages
+  helm repo add spark-operator https://kubeflow.github.io/spark-operator
+  helm install my-release spark-operator/spark-operator --namespace tsops-dev --create-namespace
+
   if ! command kubectl >/dev/null 2>&1; then
     # Install kubectl
     minikube kubectl -- get po -A
