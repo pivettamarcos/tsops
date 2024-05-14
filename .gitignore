@@ -3,3 +3,5 @@
 .ipynb_checkpoints
 
 k8s/secrets.yaml
+
+__pycache__

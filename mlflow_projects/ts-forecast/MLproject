@@ -1,0 +1,11 @@
+name: ts-forecast-train
+
+docker_env:
+  image: 127.0.0.1:5000/ts-forecast-train
+
+entry_points:
+  main:
+    parameters:
+      alpha:    {type: float, default: 0.1}
+      l1_ratio: {type: float, default: 0.1}
+    command: "python train.py --alpha {alpha} --l1-ratio {l1_ratio}"

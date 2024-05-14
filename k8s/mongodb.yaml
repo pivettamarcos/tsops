@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mongo
+  name: mongo
+  namespace: tsops-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+      - image: mongo
+        name: mongo
+        args: ["--dbpath","/data/db"]
+        livenessProbe:
+          exec:
+            command:
+              - mongosh
+              - --eval
+              - "db.adminCommand('ping')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          exec:
+            command:
+              - mongosh
+              - --eval
+              - "db.adminCommand('ping')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secrets
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secrets
+              key: password
+        volumeMounts:
+        - name: "mongo-data-dir"
+          mountPath: "/data/db"
+      volumes:
+      - name: "mongo-data-dir"
+        persistentVolumeClaim:
+          claimName: "mongo-data"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mongo
+  name: mongo-nodeport-svc
+  namespace: tsops-dev
+spec:
+  ports:
+  - port: 27017
+    protocol: TCP
+    targetPort: 27017
+    nodePort: 32000
+  selector:
+    app: mongo
+  type: NodePort
+
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-data-pv
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data/mongo
+  
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-data
+  namespace: tsops-dev
+spec:
+  accessModes:
+    - ReadWriteOnce 
+  resources:
+    requests:
+      storage: 1Gi

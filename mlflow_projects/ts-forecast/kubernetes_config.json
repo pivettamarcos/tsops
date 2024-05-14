@@ -1,0 +1,4 @@
+{
+    "kube-job-template-path": "kubernetes_job_template.yaml",
+    "repository-uri": "ts-forecast-train"
+}
