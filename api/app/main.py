@@ -65,8 +65,8 @@ def health():
 
 
 # MongoDB connection details
-MONGO_HOST = "mongodb://adminuser:password123@127.0.0.1:38679"
-MONGO_PORT = 38679
+MONGO_HOST = "mongodb://adminuser:password123@127.0.0.1:33423"
+MONGO_PORT = 33423
 MONGO_DB = "tsops_dev_db"
 MONGO_COLLECTION = "timeseries"
 
@@ -96,8 +96,6 @@ async def upload_timeseries(
     except:
         return {"error": f"Error uploading data to DB {MONGO_DB} collection {MONGO_COLLECTION}"}
     
-    client.close()
-
     return {"message": f"Successfully uploaded {count} entries into DB {MONGO_DB} collection {MONGO_COLLECTION}"}
 
 @app.post("/create_collection", tags=["forecast"])

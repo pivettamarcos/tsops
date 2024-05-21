@@ -1,4 +1,4 @@
-FROM ghcr.io/mlflow/mlflow:v2.11.3
+FROM ghcr.io/mlflow/mlflow:v2.12.2
 # Install python packages
 COPY requirements.txt /tmp
 RUN --mount=type=cache,target=/root/.cache/pip \

@@ -1,11 +1,27 @@
 name: ts-forecast-train
 
-docker_env:
-  image: 127.0.0.1:5000/ts-forecast-train
+#docker_env:
+#  image: 127.0.0.1:5000/ts-forecast-train
+conda_env: requirements.yaml
 
 entry_points:
+  train:
+    parameters:
+      series_uri: {type: str}
+      darts_model: {type: str, default: "NaiveMovingAverage"}
+    command: |    
+      python train.py --series_uri {series_uri} --darts_model {darts_model}
+  load_raw_data:
+    parameters:
+      database_name: {type: str, default: "tsops_dev_db"}
+      collection_name: {type: str}
+    command: |    
+      python load_raw_data.py --database_name {database_name} --collection_name {collection_name}
   main:
     parameters:
-      alpha:    {type: float, default: 0.1}
-      l1_ratio: {type: float, default: 0.1}
-    command: "python train.py --alpha {alpha} --l1-ratio {l1_ratio}"
+      darts_model: {type: str, default: "NaiveMovingAverage"}
+      database_name: {type: str, default: "ts_forecast"}
+      collection_name: {type: str, default: "raw_data"}
+      ignore_previous_runs: {type: bool, default: false}
+    command: |
+      python main_pipeline.py --darts_model {darts_model} --database_name {database_name} --collection_name {collection_name} --ignore_previous_runs {ignore_previous_runs}
